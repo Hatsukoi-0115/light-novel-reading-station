@@ -1,0 +1,12 @@
+# Python子项目专属.gitignore（仅作用于当前目录）
+# 忽略虚拟环境（子项目的venv/.venv）
+.venv/
+venv/
+env/
+# 忽略Python编译文件
+__pycache__/
+*.pyc
+*.pyo
+# 忽略子项目的本地配置（可选）
+.env
+local_config.py
