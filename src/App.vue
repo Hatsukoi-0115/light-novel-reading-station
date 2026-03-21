@@ -18,7 +18,8 @@
             title: element.title || '未知标题', // 加默认值防止字段缺失
             link: element.link || '',
             img_link: element.img_link || '',
-            author:element.author || '未知作者'
+            author: element.author || '未知作者',
+            status: element.status || '未知状态'
           }
           searchitems.value.push(novelItem)
         })
@@ -53,6 +54,7 @@
       :link="item.link"
       :img_link="item.img_link"
       :author="item.author"
+      :status="item.status"
     />
   </div>
 </template>

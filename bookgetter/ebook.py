@@ -84,11 +84,17 @@ def try_to_get(url):
         if wenku8_login():
             response = session.get(url, headers=HEADERS, timeout=10)
             response.encoding = "gbk"
-            return BeautifulSoup(response.text, "html.parser")
+            return {
+                'html': BeautifulSoup(response.text, "html.parser"),
+                'url': response.url
+            }
         else:
             return False
     else:
-        return BeautifulSoup(response.text, "html.parser")
+        return {
+            'html': BeautifulSoup(response.text, "html.parser"),
+            'url': response.url
+        }
 
 def wenku8_gbk_encode(s):
     """该网站专属的GBK编码（处理特殊字符）"""
@@ -109,9 +115,22 @@ def novelgetter():
         print(f"访问搜索页：{fullUrl}")
 
         # 5. 解析该网站的搜索结果（匹配其HTML结构）
-        soup = try_to_get(fullUrl)
-        if not soup:
+        backpage = try_to_get(fullUrl)
+        if not backpage:
             return jsonify({"error": "登录失败"}), 401
+
+        soup=backpage['html']
+        print(backpage['url'])
+        if 'book' in backpage['url']:       #url判断特殊情况，搜索结果仅有一本书，不显示搜索结果页，网站自动跳转至详情页
+            novelinfo = [i.text for i in soup.select_one('#content table tr+tr').select('td')]
+            print(novelinfo)
+            return jsonify([{
+                "title": soup.select_one('#content b').text,
+                "link": backpage['url'],
+                "img_link": soup.select_one('#content img').get('src', ''),
+                "author": f'作者:{novelinfo[1][5:]}/分类:{novelinfo[0][5:]}',                         #作者和分类字段
+                "status": f'更新:{novelinfo[3][5:]}/字数:{novelinfo[4][5:-1]}/{novelinfo[2][5:]}'       #更新、字数和连载状态字段
+            }])
 
         # 4. 验证搜索结果是否完整（检查"搜索结果"关键词）
         if "搜索结果" not in str(soup.find_all('caption')):
@@ -129,23 +148,24 @@ def novelgetter():
                 print('a标签不存在')
                 continue
             novel_title = a_tag.get('title')
-            novel_link = a_tag.get('href')
-            # 补全链接
-            # if novel_link and not novel_link.startswith('http'):
-            #     novel_link = f"https://www.wenku8.net{novel_link}"
+
+            # 补全详情页链接
+            novel_link = f'https://www.wenku8.net{a_tag.get('href')}'
 
             # 优化图片链接查找逻辑
             img_tag = b_tag.find_parent('div').find_parent('div').find('img')
             if not img_tag:
                 print('ifalse')
             img_link = img_tag.get('src', '') if img_tag else ''
-            author = b_tag.find_next_sibling('p').text
+            author_tag = b_tag.find_next_sibling('p')
+            status_tag = author_tag.find_next_sibling('p')
 
             novel_list.append({
                 'title': novel_title,
                 'link': novel_link,
                 'img_link': img_link,
-                'author': author
+                'author': author_tag.text,
+                'status': status_tag.text
             })
 
         return jsonify(novel_list)
@@ -158,13 +178,14 @@ def contentgetter():
     try:
         novel_url=request.args.get("novelurl", "")
 
-        soup = try_to_get(novel_url)
+        soup = try_to_get(novel_url)['html']
         if not soup:
             return jsonify({"error": "登录失败"}), 401
 
+        #需要在小说详情页中转，第二次请求
         content_url='https://www.wenku8.net'+soup.find('legend').find_next('a').get('href')
 
-        soup = try_to_get(content_url)
+        soup = try_to_get(content_url)['html']
         if not soup:
             return jsonify({"error": "登录失败"}), 401
 
@@ -187,7 +208,7 @@ def textgetter():
     try:
         text_url=request.args.get("texturl", "")
 
-        soup = try_to_get(text_url)
+        soup = try_to_get(text_url)['html']
         if not soup:
             return jsonify({"error": "登录失败"}), 401
 

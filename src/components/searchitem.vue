@@ -1,7 +1,7 @@
 <script setup>
     import { defineProps } from 'vue';
     const API_URL='http://127.0.0.1:5000'
-    const props=defineProps(['title','link','img_link','author'])
+    const props=defineProps(['title','link','img_link','author','status'])
 
     //获取章节内容的函数
     async function get_text(text_url,halfUrl) {
@@ -40,8 +40,7 @@
 
     async function get_content(){
         try{
-            const fullUrl = 'https://www.wenku8.net'+props.link
-            const response=await fetch(`${API_URL}/contentgetter?novelurl=${fullUrl}`)
+            const response=await fetch(`${API_URL}/contentgetter?novelurl=${props.link}`)
             const result=await response.json()
 
             if(result.code===200){
@@ -105,7 +104,8 @@
     <div id="container">
         <img :src="img_link" alt="小说封面" width="168" height="240"/>
         <h1>{{ title }}</h1>
-        <h2>{{ author }}</h2>
+        <h2 id="aut">{{ author }}</h2>
+        <h2 id="sta"">{{ status }}</h2>
         <button @click="get_content">阅读</button>
         <div id="box"></div>
     </div>
@@ -137,9 +137,10 @@
         box-sizing: border-box;
         float: left;
         width: 296px;
-        margin: 4px 18px 0 18px;
+        margin: 8px 18px 0 18px;
         padding: 0;
         font-size: 24px;
+        line-height: 28px;
         font-weight: normal;
     }
     h2{
@@ -149,7 +150,12 @@
         margin: 8px 18px 0 18px;
         padding: 0;
         font-size: 20px;
+        line-height: 24px;
         font-weight: normal;
+    }
+    /* 优先级:ID选择器>类选择器 */
+    #sta{
+        margin: 4px 18px 0 18px;
     }
     button{
         position: absolute;
