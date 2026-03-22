@@ -119,7 +119,7 @@ def novelgetter():
         if not backpage:
             return jsonify({"error": "登录失败"}), 401
 
-        soup=backpage['html']
+        soup = backpage['html']
         print(backpage['url'])
         if 'book' in backpage['url']:       #url判断特殊情况，搜索结果仅有一本书，不显示搜索结果页，网站自动跳转至详情页
             novelinfo = [i.text for i in soup.select_one('#content table tr+tr').select('td')]
@@ -183,7 +183,7 @@ def contentgetter():
             return jsonify({"error": "登录失败"}), 401
 
         #需要在小说详情页中转，第二次请求
-        content_url='https://www.wenku8.net'+soup.find('legend').find_next('a').get('href')
+        content_url='https://www.wenku8.net'+soup.select_one('legend+div>a').get('href')
 
         soup = try_to_get(content_url)['html']
         if not soup:

@@ -105,7 +105,7 @@
         <img :src="img_link" alt="小说封面" width="168" height="240"/>
         <h1>{{ title }}</h1>
         <h2 id="aut">{{ author }}</h2>
-        <h2 id="sta"">{{ status }}</h2>
+        <h2 id="sta">{{ status }}</h2>
         <button @click="get_content">阅读</button>
         <div id="box"></div>
     </div>
@@ -149,8 +149,8 @@
         width: 296px;
         margin: 8px 18px 0 18px;
         padding: 0;
-        font-size: 20px;
-        line-height: 24px;
+        font-size: 18px;
+        line-height: 22px;
         font-weight: normal;
     }
     /* 优先级:ID选择器>类选择器 */
@@ -159,14 +159,14 @@
     }
     button{
         position: absolute;
-        left: 188px;
-        top: 180px;
+        left: 402px;
+        top: 190px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 4px;
         background-color:mediumaquamarine;
-        width: 100px;
-        height: 50px;
-        font-size: 24px;
+        width: 80px;
+        height: 40px;
+        font-size: 20px;
         color: white;
     }
     button:hover{
