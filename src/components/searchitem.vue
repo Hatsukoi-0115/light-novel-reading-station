@@ -1,73 +1,44 @@
 <script setup>
-    import { defineProps } from 'vue';
+    import { defineProps, h, render } from 'vue'
+    import ContentWindow from './ContentWindow.vue'
     const API_URL='http://127.0.0.1:5000'
-    const props=defineProps(['title','link','img_link','author','status'])
-
-    //获取章节内容的函数
-    async function get_text(text_url,halfUrl) {
-        try {
-            // 调用后端接口获取内容（复用原contentgetter接口，逻辑通用）
-            const response = await fetch(`${API_URL}/textgetter?texturl=${halfUrl+text_url}`)
-            const result = await response.json()
-            
-            if (result.code === 200) {
-            // 重新渲染新窗口内容为章节正文
-                openInNewPage(result.pageTitle,result.tagHtml)
-            } else {
-            alert('获取章节内容失败：' + (result.msg || '未知错误'))
-            }
-        } catch (error) {
-            console.error('获取章节内容出错：', error)
-            alert('获取章节内容失败，请重试')
-        }
-    }
-
-    //绑定所有a标签的点击事件（阻止默认跳转，调用get_text）
-    function bindATagEvents(windowObj,halfUrl) {
-        const aTags = windowObj.document.querySelectorAll('a')
-        aTags.forEach(a => {
-            a.addEventListener('click', (e) => {
-                // 阻止a标签默认跳转行为
-                e.preventDefault()
-                const text_url = a.getAttribute('href')
-                if (text_url && !text_url.startsWith('http')) {
-                    // 调用get_text，传入目标地址和当前窗口对象
-                    get_text(text_url,halfUrl)
-                }
-            })
-        })
-    }
+    const props = defineProps({
+        title: String,
+        link: String,
+        img_link: String,
+        author: String,
+        status: String
+    })
 
     async function get_content(){
         try{
-            const response=await fetch(`${API_URL}/contentgetter?novelurl=${props.link}`)
-            const result=await response.json()
+            const response = await fetch(`${API_URL}/contentgetter?novelurl=${props.link}`)
+            const result = await response.json()
 
-            if(result.code===200){
-                const newWindow = openInNewPage(result.pageTitle,result.tagHtml)
-
-                // 直接绑定事件（document.write后DOM已存在）
+            if(result.code === 200){
                 const lastSlashIndex = result.content_url.lastIndexOf('/');
                 //截取从开头到最后一个 '/' 之前的内容，定位text的url时仍需使用
-                const halfUrl = result.content_url.slice(0, lastSlashIndex+1);
-                bindATagEvents(newWindow, halfUrl);
+                const halfUrl = result.content_url.slice(0, lastSlashIndex + 1);
+
+                openContentWindow(result.pageTitle, result.tagHtml, halfUrl)
             } else {
-            alert('获取目录内容失败：' + (result.msg || '未知错误'))
+                alert('获取目录内容失败：' + (result.msg || '未知错误'))
             }
         }catch(error){
             console.error(error)
         }
     }
 
-    function openInNewPage(pageTitle,tagHtml){
+    function openContentWindow(pageTitle, tagHtml, halfUrl){
         // 1. 打开一个空白新窗口
         const newWindow = window.open('', '_blank');
         if (!newWindow) {
             alert('浏览器阻止了新窗口弹出，请允许弹窗权限');
             return;
         }
-        // 2. 直接写入完整的HTML结构（包含html/head/body）
-        const fullHtml = `
+        
+        // 2. 写入并关闭文档（确保内容渲染）
+        newWindow.document.write(`
             <!DOCTYPE html>
             <html lang="zh-CN">
             <head>
@@ -85,18 +56,19 @@
                 </style>
             </head>
             <body>
-                <div class="content-wrapper">
-                    ${tagHtml} <!-- 直接插入后端返回的table HTML -->
-                </div>
+                <div id="windowRoot"></div>
             </body>
             </html>
-        `;
-
-        // 3. 写入并关闭文档（确保内容渲染）
-        newWindow.document.write(fullHtml);
+        `);
         newWindow.document.close(); // 必须关闭文档，否则内容可能不渲染
 
-        return newWindow
+        // 3. 把 Vue 组件渲染到新窗口
+        const vnode = h(ContentWindow, {
+            content: tagHtml,
+            halfUrl: halfUrl,
+            windowdoc: newWindow.document
+        })
+        render(vnode, newWindow.document.getElementById('windowRoot'))
     }
 </script>
 
@@ -133,7 +105,7 @@
         float: left;
         border-radius: 5px;
     }
-    h1{
+    h1, h2{
         box-sizing: border-box;
         float: left;
         width: 296px;
@@ -144,16 +116,10 @@
         font-weight: normal;
     }
     h2{
-        box-sizing: border-box;
-        float: left;
-        width: 296px;
-        margin: 8px 18px 0 18px;
-        padding: 0;
         font-size: 18px;
         line-height: 22px;
-        font-weight: normal;
     }
-    /* 优先级:ID选择器>类选择器 */
+    /* 优先级:style属性>ID选择器>类选择器>标签选择器 */
     #sta{
         margin: 4px 18px 0 18px;
     }

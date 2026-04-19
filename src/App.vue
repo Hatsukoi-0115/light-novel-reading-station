@@ -8,8 +8,9 @@
   async function search(){
     if(searchkey.value){
       try{
-        const response=await fetch(`${API_URL}/novelgetter?searchtype=${searchtype.value}&searchkey=${encodeURIComponent(searchkey.value)}`)
-        const result=await response.json()
+        const response = await fetch(`${API_URL}/novelgetter?searchtype=${searchtype.value}&searchkey=${encodeURIComponent(searchkey.value)}`)
+        const result = await response.json()
+        console.log('后端返回的完整对象：', result)
 
         searchitems.value=[]
 

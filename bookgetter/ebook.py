@@ -29,6 +29,18 @@ HEADERS = {
 session = requests.Session()
 
 def wenku8_login():
+    try:
+        # 访问首页，检查当前登录态
+        index_resp = session.get("https://www.wenku8.net", headers=HEADERS, timeout=10)
+        index_resp.encoding = "gbk"
+        # 关键：通过页面内容判断登录态，而非状态码
+        if "login.php" not in index_resp.url:
+            print("当前已登录，无需重新登录")
+            return True
+    except Exception as e:
+        print(f"检查登录态失败：{e}")
+
+    print("登录状态失效，重新登录...")
     LOGIN_URL = "https://www.wenku8.net/login.php"
     USERNAME = "2260972991@qq.com"
     PASSWORD = "jjy2260972991"
@@ -63,7 +75,6 @@ def wenku8_login():
         # 步骤5：该网站的登录成功判断（检查"退出登录"链接）
         if "登录成功" in login_response.text or "退出登录" in login_response.text or "个人中心" in login_response.text:
             print("登录成功！")
-            #is_logged_in = True
             return True
         elif "用户名或密码错误" in login_response.text:
             print("登录失败：用户名或密码错误")
@@ -77,24 +88,14 @@ def wenku8_login():
         return False
 
 def try_to_get(url):
+    if not wenku8_login():
+        return False
     response = session.get(url, headers=HEADERS, timeout=10)
     response.encoding = "gbk"
-    if "login.php" in response.url or "用户名或邮箱" in response.text:
-        print("登录状态失效，重新登录...")
-        if wenku8_login():
-            response = session.get(url, headers=HEADERS, timeout=10)
-            response.encoding = "gbk"
-            return {
-                'html': BeautifulSoup(response.text, "html.parser"),
-                'url': response.url
-            }
-        else:
-            return False
-    else:
-        return {
-            'html': BeautifulSoup(response.text, "html.parser"),
-            'url': response.url
-        }
+    return {
+        'html': BeautifulSoup(response.text, "html.parser"),
+        'url': response.url
+    }
 
 def wenku8_gbk_encode(s):
     """该网站专属的GBK编码（处理特殊字符）"""
@@ -189,7 +190,7 @@ def contentgetter():
         if not soup:
             return jsonify({"error": "登录失败"}), 401
 
-        #print(soup.find('table'))
+        print(content_url)
         content_html=str(soup.find('table'))
         page_title=soup.select_one('#title').text
         return jsonify({
@@ -207,7 +208,6 @@ def contentgetter():
 def textgetter():
     try:
         text_url=request.args.get("texturl", "")
-
         soup = try_to_get(text_url)['html']
         if not soup:
             return jsonify({"error": "登录失败"}), 401
