@@ -1,12 +1,12 @@
 <script setup>
-  import {ref} from 'vue'
+  import { ref } from 'vue'
   import searchitem from './components/searchitem.vue'
-  const API_URL='http://127.0.0.1:5000'
-  const searchtype=ref('articlename')
-  const searchkey=ref('')
-  const searchitems=ref([])
+  const API_URL = 'http://127.0.0.1:5000'
+  const searchtype = ref('articlename')
+  const searchkey = ref('')
+  const searchitems = ref([])
   async function search(){
-    if(searchkey.value){
+    if (searchkey.value) {
       try{
         const response = await fetch(`${API_URL}/novelgetter?searchtype=${searchtype.value}&searchkey=${encodeURIComponent(searchkey.value)}`)
         const result = await response.json()
@@ -24,7 +24,7 @@
           }
           searchitems.value.push(novelItem)
         })
-      }catch(error){
+      } catch (error) {
         console.error("搜索失败：", error)
         searchitems.value=[]
       }

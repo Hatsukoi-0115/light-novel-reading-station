@@ -2,7 +2,7 @@
   import { ref, defineProps } from 'vue'
 
   const props = defineProps({
-    content: String,
+    tagHtml: String,
     windowdoc: Object
   })
 
@@ -19,7 +19,7 @@
 </script>
 
 <template>
-  <div class="content-page" v-html="content"></div>
+  <div class="content-page" v-html="tagHtml"></div>
 
   <!-- 你要的自定义功能，直接写组件 -->
   <!-- <div class="tools">
